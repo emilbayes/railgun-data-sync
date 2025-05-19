@@ -1,0 +1,120 @@
+### include("./scalars.graphql")
+# Events
+type ETransactV2_1 {
+  treeNumber: Uint256!
+  startPosition: Uint256!
+  hash: [Bytes32!]!
+  ciphertext: [CommitmentCiphertextV2_1!]!
+}
+
+type EShieldV2_1 {
+  treeNumber: Uint256!
+  startPosition: Uint256!
+  commitments: [CommitmentPreimageV2_1!]!
+  shieldCiphertext: [ShieldCiphertextV2_1!]!
+  fees: [Uint256]!
+}
+
+type EUnshieldV2_1 {
+  to: Address!
+  token: TokenDataV2_1!
+  amount: Uint256!
+  fee: Uint256!
+}
+
+type ENullifiedV2_1 {
+  treeNumber: Uint16!
+  nullifier: [Bytes32!]!
+}
+
+# Call args
+type CShieldV2_1 {
+  shieldRequests: [ShieldRequestV2_1!]!
+}
+
+type CTransactV2_1 {
+  transactions: [TransactionV2_1!]!
+}
+
+# Structs
+type ShieldRequestV2_1 {
+  preimage: CommitmentPreimageV2_1!
+  ciphertext: ShieldCiphertextV2_1!
+}
+
+enum TokenTypeV2_1 {
+  ERC20
+  ERC721
+  ERC1155
+}
+
+type TokenDataV2_1 {
+  tokenType: TokenTypeV2_1!
+  tokenAddress: Address!
+  tokenSubID: Uint256!
+}
+
+type CommitmentCiphertextV2_1 {
+  "Length 4"
+  ciphertext: [Bytes32!]!
+  blindedSenderViewingKey: Bytes32!
+  blindedReceiverViewingKey: Bytes32!
+  annotationData: Bytes!
+  memo: Bytes!
+}
+
+type ShieldCiphertextV2_1 {
+  "Length 3"
+  encryptedRandom: [Bytes32!]!
+  shieldKey: Bytes32!
+}
+
+enum UnshieldTypeV2_1 {
+  NONE
+  NORMAL
+  REDIRECT
+}
+
+type BoundParamsV2_1 {
+  treeNumber: Uint16!
+  minGasPrice: Uint72!
+  unshield: UnshieldTypeV2_1!
+  chainID: Uint64!
+  adaptContract: Address!
+  adaptParams: Bytes32!
+  commitmentCiphertext: [CommitmentCiphertextV2_1!]!
+}
+
+type TransactionV2_1 {
+  proof: SnarkProofV2_1!
+  merkleRoot: Bytes32!
+  nullifiers: [Bytes32!]!
+  commitments: [Bytes32!]!
+  boundParams: BoundParamsV2_1!
+  unshieldPreimage: CommitmentPreimageV2_1!
+}
+
+type CommitmentPreimageV2_1 {
+  npk: Bytes32!
+  token: TokenDataV2_1!
+  value: Uint120!
+}
+
+type G1PointV2_1 {
+  x: Uint256!
+  y: Uint256!
+}
+
+type G2PointV2_1 {
+  "Length 2"
+  x: [Uint256!]!
+  "Length 2"
+  y: [Uint256!]!
+}
+
+type SnarkProofV2_1 {
+  a: G1PointV2_1!
+  b: G2PointV2_1!
+  c: G1PointV2_1!
+}
+

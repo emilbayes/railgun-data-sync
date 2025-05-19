@@ -1,0 +1,46 @@
+### include("./scalars.graphql")
+### include("./v1.graphql")
+### include("./v2.graphql")
+### include("./v2_1.graphql")
+
+scalar BigInt
+
+union RailgunFunctions = 
+  | CGenerateDepositV1
+  | CTransactV1
+  | CShieldV2
+  | CTransactV2
+  | CShieldV2_1
+  | CTransactV2_1
+
+union RailgunEvents = 
+  | ECommitmentBatchV1
+  | EGeneratedCommitmentBatchV1
+  | ENullifiersV1
+  | ETransactV2
+  | EShieldV2
+  | EUnshieldV2
+  | ENullifiedV2
+  | ETransactV2_1
+  | EShieldV2_1
+  | EUnshieldV2_1
+  | ENullifiedV2_1
+
+type RailgunTransactionBatch {
+  "Ordering information"
+  blockNumber: BigInt!
+  blockTimestamp: Int!
+  transactionIndex: Int!
+  "Null for EOA calls"
+  tracePath: [Int!]
+
+  "Inline tx accountability"
+  origin: Address!
+  from: Address!
+
+  "Logs here will need to be attributed to the correct internal transaction. Ie. One can’t just naively add all emitted events from a given transaction hash in case they came from separate internal calls to railgun"
+  logs: [EVMLog!]!
+
+  "Call args"
+  input: RailgunFunctions!
+}

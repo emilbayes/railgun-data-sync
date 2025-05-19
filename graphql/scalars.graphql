@@ -1,0 +1,10 @@
+# Solidity types as GraphQL scalars
+scalar Address
+
+scalar Uint16
+scalar Uint64
+scalar Uint72
+scalar Uint120
+
+scalar Bytes
+scalar Bytes32

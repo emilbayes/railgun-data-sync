@@ -1,0 +1,117 @@
+enum Version {
+  V1
+  V2
+  V2_1
+}
+
+type Shield {
+  version: Version!
+
+  preimage: CommitmentPreimage!
+  ciphertext: ShieldCiphertext!
+
+  treeNumber: Int!
+  treePosition: Int!
+  commitment: Bytes32!
+  
+  txid: Bytes32!
+}
+
+union ShieldCiphertext = 
+  | ShieldCiphertextV1
+  | ShieldCiphertextV
+
+"""
+"""
+type ShieldCiphertextV1 {
+  "Length 2"
+  encryptedRandom: [Bytes32!]!
+}
+
+"""
+AES-256-GCM
+"""
+type ShieldCiphertextV2 {
+  "Length 3"
+  encryptedRandom: [Bytes32!]!
+  shieldKey: Bytes32!
+}
+
+type CommitmentPreimage {
+  npk: Bytes32!
+  token: TokenData!
+  value: Uint120!
+}
+
+type TokenData {
+  tokenType: TokenType!
+  tokenAddress: Address!
+  tokenSubID: Uint256!
+}
+
+enum TokenType {
+  ERC20
+  ERC721
+  ERC1155
+}
+
+type Transaction {
+  version: Version!
+
+  proof: SnarkProof!
+  merkleRoot: Bytes32!
+  nullifiers: [Bytes32!]!
+  commitments: [Bytes32!]!
+
+  boundParams: BoundParams!
+
+  # from v1
+  withdrawPreimage: CommitmentPreimage!
+  overrideOutput: Address!
+
+  # from v2
+  unshieldPreimage: CommitmentPreimage!
+}
+
+union BoundParams = 
+  | BoundParamsV1
+  | BoundParamsV2
+
+type BoundParamsV1 {
+  treeNumber: Uint16!
+  withdraw: WithdrawalType!
+  adaptContract: Address!
+  adaptParams: Bytes32!
+  commitmentCiphertext: [CommitmentCiphertext!]!
+}
+
+type BoundParamsV2 {
+  treeNumber: Uint16!
+  minGasPrice: Uint72!
+  unshield: UnshieldType!
+  chainID: Uint64!
+  adaptContract: Address!
+  adaptParams: Bytes32!
+  commitmentCiphertext: [CommitmentCiphertext!]!
+}
+
+union CommitmentCiphertext = 
+  | CommitmentCiphertextV1
+  | CommitmentCiphertextV2
+
+type CommitmentCiphertextV1 {
+  "Length 4 (CIPHERTEXT_WORDS)"
+  ciphertext: Bytes!
+  "Length 2"
+  ephemeralKeys: [Uint256!]!
+  memo: Bytes!
+}
+
+type CommitmentCiphertextV2 {
+  "Length 4"
+  ciphertext: [Bytes32!]!
+  blindedSenderViewingKey: Bytes32!
+  blindedReceiverViewingKey: Bytes32!
+  annotationData: Bytes!
+  memo: Bytes!
+}

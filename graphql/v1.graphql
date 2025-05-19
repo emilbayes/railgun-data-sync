@@ -1,0 +1,100 @@
+### include("./scalars.graphql")
+
+# Events
+type ECommitmentBatchV1 {
+  treeNumber: Uint256!
+  startPosition: Uint256!
+  hash: [Uint256!]!
+  ciphertext: [CommitmentCiphertextV1!]!
+}
+type EGeneratedCommitmentBatchV1 {
+  treeNumber: Uint256!
+  startPosition: Uint256!
+  commitments: [CommitmentPreimageV1!]!
+  "Array of 2-element arrays"
+  encryptedRandom: [[Uint256!]!]!
+}
+type ENullifiersV1 {
+  treeNumber: Uint256!
+  nullifier: [Uint256!]!
+}
+
+# Call args
+type CGenerateDepositV1 {
+  notes: [CommitmentPreimageV1!]!
+  "Array of 2-element arrays"
+  encryptedRandom: [[Uint256!]!]!
+}
+
+type CTransactV1 {
+  transactions: [TransactionV1!]!
+}
+
+# Structs
+enum TokenTypeV1 {
+  ERC20
+  ERC721
+  ERC1155
+}
+
+type TokenDataV1 {
+  tokenType: TokenTypeV1!
+  tokenAddress: Address!
+  tokenSubID: Uint256!
+}
+
+type CommitmentCiphertextV1 {
+  "Length 4 (CIPHERTEXT_WORDS)"
+  ciphertext: [Uint256!]!
+  "Length 2"
+  ephemeralKeys: [Uint256!]!
+  memo: [Uint256!]!
+}
+
+enum WithdrawalTypeV1 {
+  NONE
+  WITHDRAW
+  REDIRECT
+}
+
+type BoundParamsV1 {
+  treeNumber: Uint16!
+  withdraw: WithdrawalTypeV1!
+  adaptContract: Address!
+  adaptParams: Bytes32!
+  commitmentCiphertext: [CommitmentCiphertextV1!]!
+}
+
+type TransactionV1 {
+  proof: SnarkProofV1!
+  merkleRoot: Uint256!
+  nullifiers: [Uint256!]!
+  commitments: [Uint256!]!
+  boundParams: BoundParamsV1!
+  withdrawPreimage: CommitmentPreimageV1!
+  overrideOutput: Address!
+}
+
+type CommitmentPreimageV1 {
+  npk: Uint256!
+  token: TokenDataV1!
+  value: Uint120!
+}
+
+type G1PointV1 {
+  x: Uint256!
+  y: Uint256!
+}
+
+type G2PointV1 {
+  "Length 2"
+  x: [Uint256!]!
+  "Length 2"
+  y: [Uint256!]!
+}
+
+type SnarkProofV1 {
+  a: G1PointV1!
+  b: G2PointV1!
+  c: G1PointV1!
+}

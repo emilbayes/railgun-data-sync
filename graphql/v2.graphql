@@ -1,0 +1,119 @@
+### include("./scalars.graphql")
+
+# Events
+type ETransactV2 {
+  treeNumber: Uint256!
+  startPosition: Uint256!
+  hash: [Bytes32!]!
+  ciphertext: [CommitmentCiphertextV2!]!
+}
+
+type EShieldV2 {
+  treeNumber: Uint256!
+  startPosition: Uint256!
+  commitments: [CommitmentPreimageV2!]!
+  shieldCiphertext: [ShieldCiphertextV2!]!
+}
+
+type EUnshieldV2 {
+  to: Address!
+  token: TokenDataV2!
+  amount: Uint256!
+  fee: Uint256!
+}
+
+type ENullifiedV2 {
+  treeNumber: Uint16!
+  nullifier: [Bytes32!]!
+}
+
+# Call args
+type CShieldV2 {
+  shieldRequests: [ShieldRequestV2!]!
+}
+
+type CTransactV2 {
+  transactions: [TransactionV2!]!
+}
+
+# Structs
+type ShieldRequestV2 {
+  preimage: CommitmentPreimageV2!
+  ciphertext: ShieldCiphertextV2!
+}
+
+enum TokenTypeV2 {
+  ERC20
+  ERC721
+  ERC1155
+}
+
+type TokenDataV2 {
+  tokenType: TokenTypeV2!
+  tokenAddress: Address!
+  tokenSubID: Uint256!
+}
+
+type CommitmentCiphertextV2 {
+  "Length 4"
+  ciphertext: [Bytes32!]
+  blindedSenderViewingKey: Bytes32!
+  blindedReceiverViewingKey: Bytes32!
+  annotationData: Bytes!
+  memo: Bytes!
+}
+
+type ShieldCiphertextV2 {
+  "Length 3"
+  encryptedRandom: [Bytes32!]!
+  shieldKey: Bytes32!
+}
+
+enum UnshieldTypeV2 {
+  NONE
+  NORMAL
+  REDIRECT
+}
+
+type BoundParamsV2 {
+  treeNumber: Uint16!
+  minGasPrice: Uint72!
+  unshield: UnshieldTypeV2!
+  chainID: Uint64!
+  adaptContract: Address!
+  adaptParams: Bytes32!
+  commitmentCiphertext: [CommitmentCiphertextV2!]!
+}
+
+type TransactionV2 {
+  proof: SnarkProofV2!
+  merkleRoot: Bytes32!
+  nullifiers: [Bytes32!]!
+  commitments: [Bytes32!]!
+  boundParams: BoundParamsV2!
+  unshieldPreimage: CommitmentPreimageV2!
+}
+
+type CommitmentPreimageV2 {
+  npk: Bytes32!
+  token: TokenDataV2!
+  value: Uint120!
+}
+
+type G1PointV2 {
+  x: Uint256!
+  y: Uint256!
+}
+
+type G2PointV2 {
+  "Length 2"
+  x: [Uint256!]!
+  "Length 2"
+  y: [Uint256!]!
+}
+
+type SnarkProofV2 {
+  a: G1PointV2!
+  b: G2PointV2!
+  c: G1PointV2!
+}

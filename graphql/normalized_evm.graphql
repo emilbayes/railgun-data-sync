@@ -1,0 +1,75 @@
+### include("./scalars.graphql")
+### include("./v1.graphql")
+### include("./v2.graphql")
+### include("./v2_1.graphql")
+
+scalar BigInt
+
+union RailgunFunctions = 
+  | CGenerateDepositV1
+  | CTransactV1
+  | CShieldV2
+  | CTransactV2
+  | CShieldV2_1
+  | CTransactV2_1
+
+union RailgunEvents = 
+  | ECommitmentBatchV1
+  | EGeneratedCommitmentBatchV1
+  | ENullifiersV1
+  | ETransactV2
+  | EShieldV2
+  | EUnshieldV2
+  | ENullifiedV2
+  | ETransactV2_1
+  | EShieldV2_1
+  | EUnshieldV2_1
+  | ENullifiedV2_1
+
+type EVMBlock {
+  number: BigInt!
+  "Seconds since UNIX epoch"
+  timestamp: Int!
+  "32 byte block hash"
+  hash: Bytes!
+
+  "Transactions made by EOAs"
+  transactions: [EVMTransaction!]!
+}
+
+type EVMTransaction {
+  "32 byte transaction hash"
+  hash: Bytes!
+  "Transaction position within a block"
+  index: Int!
+  "Equivalent to tx.origin/ORIGIN"
+  from: Address!
+  "Nullable, as the transaction may not be a direct call to RAILGUN, but an intermediate smart contract such as RelayAdapt"
+  input: RailgunFunctions
+
+  "RAILGUN events emitted from this transaction"
+  logs: [EVMLog!]!
+
+  "Nullable field. If the transaction is not directly to RAILGUN, the relevant transactions will be nested as internal. Note that internal transactions are not directly visible, but need tracing to be retrieved"
+  internalTransactions: [RailgunTransactionBatch!]
+}
+
+type EVMLog {
+  "Log indexes are scoped per block and not per transaction, but still provide a total order"
+  index: Int!
+  "Should always be a RAILGUN contract address"
+  address: Address!
+
+  "As we are only interested in RAILGUN events, this field will always decode to one of the defined event types"
+  log: RailgunEvents!
+}
+
+type RailgunTransactionBatch {
+  "List of indexes to internal transactions, showing the path that ultimately called a RAILGUN function"
+  tracePath: [Int!]!
+  
+  "Equivalent to msg.sender / CALLER"
+  from: Address!
+  "As we only decode internal transactions that are calls to RAILGUN, this will always be one of the RAILGUN call args"
+  input: RailgunFunctions!
+}
