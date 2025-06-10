@@ -7,7 +7,7 @@ import networkUpgrades from '../upgrades.json'
  * @param a
  * @param b
  */
-function min(a: bigint, b: bigint): bigint {
+function min (a: bigint, b: bigint): bigint {
   return a < b ? a : b
 }
 
@@ -17,7 +17,7 @@ function min(a: bigint, b: bigint): bigint {
  * @param end
  * @param step
  */
-function* range(start: bigint, end: bigint, step: bigint): Iterable<[bigint, bigint]> {
+function * range (start: bigint, end: bigint, step: bigint): Iterable<[bigint, bigint]> {
   let current = start
 
   while (current <= end) {
@@ -40,15 +40,13 @@ type NetworkUpgrade = {
 
 const eth = networkUpgrades.ethereum as NetworkUpgrade
 
-console.log(eth)
-
 let i = 0
 /**
  *
  * @param method
  * @param params
  */
-function jsonrpc(method: string, params: any) {
+function jsonrpc (method: string, params: any) {
   return {
     jsonrpc: '2.0',
     id: i++,
@@ -122,7 +120,7 @@ const nameToAbi = new Map([
  * @param batch
  * @param tries
  */
-async function req(batch: any, tries = 3) {
+async function req (batch: any, tries = 3) {
   if (tries <= 0) throw new Error('Failed to fetch logs after multiple attempts')
 
   const res = await fetch(RPC_URL, {
