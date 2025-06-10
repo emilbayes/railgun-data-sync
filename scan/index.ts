@@ -1,4 +1,7 @@
 import * as ABIs from '@railgun-reloaded/contract-abis'
+import { ethers } from 'ethers'
+import assert from 'nanoassert'
+import UpsertMap from 'upsert-map'
 
 import networkUpgrades from '../upgrades.json'
 
@@ -56,6 +59,14 @@ function jsonrpc (method: string, params: any) {
 }
 
 const RPC_URL = process.env.RPC_URL
+/**
+ *
+ * @param a
+ * @param b
+ */
+function equalAddress (a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase()
+}
 
 const chunkSize = 500n
 const nameToAbi = new Map([
@@ -64,56 +75,109 @@ const nameToAbi = new Map([
   ['v2.1', ABIs.RailgunV2_1]
 ])
 
-  ; (async () => {
-    for (const upgrade of eth.upgrades) {
-      const address = eth.address
-      const ABI = nameToAbi.get(upgrade.name)!
+type TxBatch = {
+  blockNumber: bigint
+  blockTimestamp: number
+  blockHash: string
 
-      console.log(ABI.length)
-      const reqQueue = []
-      for (const [start, end] of range(BigInt(upgrade.from), BigInt(upgrade.to), chunkSize)) {
-        const fromBlock = '0x' + start.toString(16)
-        const toBlock = '0x' + end.toString(16)
+  transactionIndex: number
+  transactionHash: string
 
-        const filter = {
-          fromBlock,
-          toBlock,
-          address,
-          topics: []
-        }
-        reqQueue.push(jsonrpc('eth_getLogs', filter))
+  tracePath?: number[]
 
-        const data = await req(reqQueue)
+  origin: string
+  from: string
 
-        // clear queue
-        reqQueue.length = 0
+  logs: any[]
 
-        console.log(`Processing upgrade ${upgrade.name} from block ${start} to ${end}...`)
-        if (data.error) {
-          console.error(`Error fetching logs: ${data.error.message}`)
-          throw new Error(`Failed to fetch logs for upgrade ${upgrade.name}`)
-        }
+  input?: any
+}
 
-        // first n items of results are txs, the last item is always the logs
-        for (const { result: tx } of data.slice(0, -1)) {
-          console.log(`Processing tx ${tx.hash}...`)
-          console.dir(tx)
-        }
+/**
+ *
+ */
+async function sync () {
+  const needTracing = new Set<string>()
+  // FIXME: Only doing v1 for now
+  for (const upgrade of eth.upgrades.slice(0, 1)) {
+    const address = eth.address
+    const ABI = nameToAbi.get(upgrade.name)!
+    const iface = ethers.Interface.from(ABI)
 
-        const txHashes = new Set<string>()
-        data.at(-1)?.result.forEach((log: any) => {
-          console.log('Processing log:', log)
+    const reqQueue = []
+    const txLogsMap = new UpsertMap<string, any[]>(() => [], a => a.length === 0)
+    for (const [start, end] of range(BigInt(upgrade.from), BigInt(upgrade.to), chunkSize)) {
+      const fromBlock = '0x' + start.toString(16)
+      const toBlock = '0x' + end.toString(16)
 
-          txHashes.add(log.transactionHash)
-        })
-
-        for (const txHash of txHashes) {
-          reqQueue.push(jsonrpc('eth_getTransactionByHash', txHash))
-        }
+      const filter = {
+        fromBlock,
+        toBlock,
+        address,
+        topics: []
       }
-      break
+      reqQueue.push(jsonrpc('eth_getLogs', filter))
+
+      const data = await req(reqQueue)
+
+      // clear queue
+      reqQueue.length = 0
+
+      console.log(`Processing upgrade ${upgrade.name} from block ${start} to ${end}...`)
+      if (data.error) {
+        console.error(`Error fetching logs: ${data.error.message}`)
+        throw new Error(`Failed to fetch logs for upgrade ${upgrade.name}`)
+      }
+
+      // first n items of results are txs, the last item is always the logs
+      for (const { result: tx } of data.slice(0, -1)) {
+        if (tx == null) {
+          console.error('Something went wrong here')
+          console.dir(data)
+        }
+
+        const eoa = equalAddress(tx.to, address)
+        const logs = txLogsMap.get(tx.hash)
+        assert(logs != null)
+        assert(logs.length > 0)
+
+        if (eoa === false) needTracing.add(tx.hash)
+
+        const t: TxBatch = {
+          blockNumber: BigInt(tx.blockNumber),
+          blockTimestamp: Number(logs[0].blockTimestamp),
+          blockHash: tx.blockHash,
+
+          transactionIndex: Number(tx.transactionIndex),
+          transactionHash: tx.hash,
+
+          from: eoa ? tx.from : null,
+          origin: tx.from,
+
+          logs: logs.map(log => iface.parseLog(log)),
+
+          input: iface.parseTransaction({ data: tx.input })
+        }
+
+        txLogsMap.delete(tx.hash)
+
+        console.log(`Processed tx ${t.transactionHash} at block ${t.blockNumber} with ${t.logs.length} logs`)
+        console.dir(t)
+      }
+
+      data.at(-1)?.result.forEach((log: any) => {
+        txLogsMap.upsert(log.transactionHash).push(log)
+      })
+
+      for (const txHash of txLogsMap.keys()) {
+        reqQueue.push(jsonrpc('eth_getTransactionByHash', txHash))
+      }
     }
-  })()
+  }
+
+  console.log(`Need tracing for ${needTracing.size} transactions`)
+  console.dir(needTracing, { depth: null })
+}
 
 /**
  *
@@ -141,3 +205,5 @@ async function req (batch: any, tries = 3) {
 
   return data
 }
+
+sync().then(console.log).catch(console.error)
