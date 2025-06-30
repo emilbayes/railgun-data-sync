@@ -50,7 +50,7 @@ class RPC {
   /**
    * Queue of requests to be sent to the RPC server.
    */
-  #requests: [ReturnType<typeof Promise.withResolvers<unknown>>, Req][] = []
+  #requests: [ReturnType<typeof Promise.withResolvers<any>>, Req][] = []
 
   /**
    * Maximum number of requests to batch together in a single RPC call.
@@ -72,8 +72,8 @@ class RPC {
    * @param req JSON-RPC request object, see {@link jsonrpc}
    * @returns A promise that resolves with the result of the request, or rejects with an error if the request failed.
    */
-  async request (req: Req): Promise<any> {
-    const prom = Promise.withResolvers<any>()
+  async request<T = any>(req: Req): Promise<T> {
+    const prom = Promise.withResolvers<T>()
     this.#requests.push([prom, req])
 
     if (this.#inflight != null) return prom.promise
