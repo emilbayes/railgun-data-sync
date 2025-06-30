@@ -1,0 +1,5 @@
+node_modules
+*.js
+*.tsbuildinfo
+
+!eslint.config.js
