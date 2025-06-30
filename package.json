@@ -12,14 +12,13 @@
   "dependencies": {
     "@railgun-reloaded/contract-abis": "^1.0.1",
     "ethers": "^6.14.3",
-    "nanoassert": "^2.0.0",
+    "nanoassert": "^3.0.1",
     "upsert-map": "^1.0.1"
   },
   "devDependencies": {
     "@railgun-reloaded/eslint-config": "^1.1.0",
     "@railgun-reloaded/tsconfig": "^1.2.0",
     "@types/brittle": "^3.5.0",
-    "@types/nanoassert": "^2.0.3",
     "@types/node": "^24.0.0",
     "brittle": "^3.16.3",
     "eslint": "^9.28.0",
